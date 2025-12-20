@@ -1,0 +1,11 @@
+body.galaxy{
+ background:radial-gradient(circle at top,#3a1c71,#000);
+ color:white;
+ font-family:sans-serif;
+}
+.container{width:90%;margin:auto}
+section{background:#2b145d;padding:20px;margin:20px 0;border-radius:16px}
+table{width:100%;background:white;color:black;border-collapse:collapse}
+td,th{border:1px solid #ccc;padding:6px;text-align:center}
+button{background:#7f7cff;color:white;border:none;padding:8px 14px;border-radius:8px}
+textarea,input,select{width:100%;margin:6px 0;padding:8px}
