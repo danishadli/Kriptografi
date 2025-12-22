@@ -63,3 +63,6 @@ def export(preset):
     path = os.path.join(EXPORT_DIR, f"{preset}_analysis.xlsx")
     export_excel(build_sbox(preset), path)
     return send_file(path, as_attachment=True)
+
+if __name__ == "__main__":
+    app.run(debug=True)
