@@ -1,0 +1,6 @@
+flask
+gunicorn
+pillow
+numpy
+pandas
+openpyxl
