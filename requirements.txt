@@ -1,6 +1,7 @@
 flask
 gunicorn
-pillow
+pycryptodome
 numpy
 pandas
+pillow
 openpyxl
