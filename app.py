@@ -4,11 +4,13 @@ from core.image_crypto import encrypt_image, decrypt_image
 from core.sbox_builder import build_sbox
 from core.sbox_analysis import analyze_sbox, export_excel
 
-import os
+import os, uuid
 
 app = Flask(__name__)
 UPLOAD_DIR = "uploads"
 EXPORT_DIR = "exports"
+
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(EXPORT_DIR, exist_ok=True)
@@ -17,23 +19,22 @@ os.makedirs(EXPORT_DIR, exist_ok=True)
 def index():
     return render_template("index.html")
 
-# ===== TEXT AES =====
 @app.route("/text/encrypt", methods=["POST"])
 def text_encrypt():
-    d = request.json
+    d = request.get_json()
     return jsonify({"result": aes_encrypt_text(d["text"], d["key"])})
 
 @app.route("/text/decrypt", methods=["POST"])
 def text_decrypt():
-    d = request.json
+    d = request.get_json()
     return jsonify({"result": aes_decrypt_text(d["text"], d["key"])})
 
-# ===== IMAGE AES =====
 @app.route("/image/encrypt", methods=["POST"])
 def image_encrypt():
     f = request.files["image"]
     key = request.form["key"]
-    path = os.path.join(UPLOAD_DIR, "in.png")
+    filename = f"{uuid.uuid4()}.png"
+    path = os.path.join(UPLOAD_DIR, filename)
     f.save(path)
     out = encrypt_image(path, key)
     return send_file(out, mimetype="image/png")
@@ -42,12 +43,12 @@ def image_encrypt():
 def image_decrypt():
     f = request.files["image"]
     key = request.form["key"]
-    path = os.path.join(UPLOAD_DIR, "enc.png")
+    filename = f"{uuid.uuid4()}.png"
+    path = os.path.join(UPLOAD_DIR, filename)
     f.save(path)
     out = decrypt_image(path, key)
     return send_file(out, mimetype="image/png")
 
-# ===== SBOX =====
 @app.route("/sbox/<preset>")
 def sbox(preset):
     s = build_sbox(preset)
@@ -62,6 +63,3 @@ def export(preset):
     path = os.path.join(EXPORT_DIR, f"{preset}_analysis.xlsx")
     export_excel(build_sbox(preset), path)
     return send_file(path, as_attachment=True)
-
-if __name__ == "__main__":
-    app.run(debug=True)
