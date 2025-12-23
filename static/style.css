@@ -1,11 +1,120 @@
-body.galaxy{
- background:radial-gradient(circle at top,#3a1c71,#000);
- color:white;
- font-family:sans-serif;
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, sans-serif;
 }
-.container{width:90%;margin:auto}
-section{background:#2b145d;padding:20px;margin:20px 0;border-radius:16px}
-table{width:100%;background:white;color:black;border-collapse:collapse}
-td,th{border:1px solid #ccc;padding:6px;text-align:center}
-button{background:#7f7cff;color:white;border:none;padding:8px 14px;border-radius:8px}
-textarea,input,select{width:100%;margin:6px 0;padding:8px}
+
+.container {
+  width: 92%;
+  max-width: 1400px;
+  margin: auto;
+}
+
+
+body.galaxy {
+  background: radial-gradient(circle at top, #3a1c71, #000);
+  color: white;
+}
+
+body.galaxy section {
+  background: rgba(43, 20, 93, 0.85);
+}
+
+
+section {
+  background: #ffffff;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 16px;
+}
+
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border: 1px solid #ccc;
+  padding: 6px;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+
+textarea,
+input,
+select {
+  width: 100%;
+  margin: 6px 0;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+}
+
+
+button {
+  background: #7f7cff;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+
+@media (max-width: 1024px) {
+  .container {
+    width: 95%;
+  }
+
+  textarea,
+  input,
+  select {
+    font-size: 0.85rem;
+  }
+
+  button {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    width: 100%;
+    padding: 0 10px;
+  }
+
+  section {
+    padding: 14px;
+    margin: 12px 0;
+  }
+
+  table {
+    font-size: 0.7rem;
+  }
+
+  th,
+  td {
+    padding: 4px;
+  }
+
+  textarea,
+  input,
+  select {
+    font-size: 0.8rem;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    font-size: 0.85rem;
+  }
+}
