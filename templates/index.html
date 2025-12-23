@@ -1,351 +1,985 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AES & S-Box Analysis Platform</title>
-
-  <!-- Base + Galaxy style -->
-  <link rel="stylesheet" href="/static/style.css" />
-
-  <!-- UI Advanced (override base) -->
-  <style>
-    :root {
-      --primary: #6366f1;
-      --primary-dark: #4f46e5;
-      --bg-card: #ffffff;
-      --bg-soft: #f5f7fa;
-      --border: #e5e7eb;
-      --text-main: #111827;
-      --text-muted: #6b7280;
-      --success: #10b981;
-    }
-
-    body.soft {
-      background: linear-gradient(135deg, #f5f7fa, #eef2ff);
-      color: var(--text-main);
-    }
-
-    body.galaxy {
-      color: #fff;
-    }
-
-    .header {
-      text-align: center;
-      padding: 1.8rem;
-      border-radius: 18px;
-      margin-bottom: 2rem;
-      background: var(--bg-card);
-      box-shadow: 0 10px 25px rgba(0,0,0,.08);
-    }
-
-    body.galaxy .header {
-      background: rgba(43, 20, 93, 0.9);
-    }
-
-    .header h1 {
-      font-size: clamp(1.4rem, 3vw, 2rem);
-      color: var(--primary);
-    }
-
-    .main-grid {
-      display: grid;
-      grid-template-columns: 320px 1fr;
-      gap: 2rem;
-    }
-
-    @media (max-width: 1024px) {
-      .main-grid {
-        grid-template-columns: 1fr;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AES & S-Box Analysis Platform</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
-    }
 
-    .panel {
-      background: var(--bg-card);
-      border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: 0 8px 20px rgba(0,0,0,.08);
-    }
+      :root {
+        --primary: #6366f1;
+        --primary-light: #818cf8;
+        --primary-dark: #4f46e5;
+        --bg-main: #f8f9fa;
+        --bg-card: #ffffff;
+        --bg-hover: #f1f3f5;
+        --border: #e9ecef;
+        --text-primary: #212529;
+        --text-secondary: #6c757d;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --error: #ef4444;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+        --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+      }
 
-    body.galaxy .panel {
-      background: rgba(43, 20, 93, 0.85);
-    }
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+        color: var(--text-primary);
+        line-height: 1.6;
+        min-height: 100vh;
+        padding: 2rem;
+      }
 
-    .panel-title {
-      font-weight: 600;
-      margin-bottom: 1rem;
-      padding-bottom: .5rem;
-      border-bottom: 2px solid var(--border);
-    }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
 
-    .tab-container {
-      display: flex;
-      gap: .5rem;
-      border-bottom: 2px solid var(--border);
-      overflow-x: auto;
-    }
+      .header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: var(--bg-card);
+        border-radius: 16px;
+        box-shadow: var(--shadow-md);
+      }
 
-    .tab {
-      padding: .6rem 1.2rem;
-      background: none;
-      border: none;
-      font-weight: 500;
-      cursor: pointer;
-      color: var(--text-muted);
-      border-bottom: 3px solid transparent;
-      white-space: nowrap;
-    }
+      .header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+      }
 
-    .tab.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
-    }
+      .header p {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+      }
 
-    .tab-content {
-      display: none;
-      margin-top: 1.2rem;
-    }
+      .main-grid {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+      }
 
-    .tab-content.active {
-      display: block;
-    }
+      .panel {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-md);
+      }
 
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
-      gap: 1rem;
-    }
+      .panel-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
 
-    .metric-card {
-      background: var(--bg-soft);
-      padding: 1rem;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-    }
+      .panel-title::before {
+        content: "";
+        width: 4px;
+        height: 20px;
+        background: var(--primary);
+        border-radius: 2px;
+      }
 
-    body.galaxy .metric-card {
-      background: rgba(0,0,0,.25);
-      border-color: rgba(255,255,255,.15);
-    }
+      .form-group {
+        margin-bottom: 1.25rem;
+      }
 
-    .metric-label {
-      font-size: .8rem;
-      color: var(--text-muted);
-    }
+      .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+      }
 
-    .metric-value {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: var(--primary);
-    }
+      .form-input,
+      .form-select {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+        background: var(--bg-main);
+      }
 
-    .sbox-table-container {
-      overflow-x: auto;
-    }
+      .form-input:focus,
+      .form-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: var(--bg-card);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      }
 
-    .sbox-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: .8rem;
-      background: #fff;
-    }
+      .form-select {
+        cursor: pointer;
+      }
 
-    .sbox-table th,
-    .sbox-table td {
-      border: 1px solid #ccc;
-      padding: 6px;
-      text-align: center;
-    }
+      .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
 
-    .sbox-table thead th {
-      background: linear-gradient(135deg,#667eea,#764ba2);
-      color: white;
-      position: sticky;
-      top: 0;
-    }
+      .checkbox-group input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: var(--primary);
+      }
 
-    .status {
-      text-align: center;
-      padding: .6rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      background: #e5e7eb;
-    }
+      .btn {
+        padding: 0.625rem 1.25rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: center;
+      }
 
-    .status.running { background: #fde68a; }
-    .status.done { background: #d1fae5; }
+      .btn-primary {
+        background: var(--primary);
+        color: white;
+      }
 
-    @media (max-width: 640px) {
-      .panel { padding: 1rem; }
-      .tab { font-size: .8rem; }
-      .sbox-table { font-size: .7rem; }
-    }
-  </style>
-</head>
+      .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+      }
 
-<body class="soft">
-<div class="container">
+      .btn-secondary {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+        border: 1.5px solid var(--border);
+      }
 
-  <!-- HEADER -->
-  <div class="header">
-    <h1>🔐 AES & S-Box Analysis Platform</h1>
-    <p>Cryptographic Research, Visualization & Experimentation</p>
-  </div>
+      .btn-secondary:hover {
+        background: var(--border);
+      }
 
-  <div class="main-grid">
+      .btn-success {
+        background: var(--success);
+        color: white;
+      }
 
-    <!-- LEFT PANEL -->
-    <div>
-      <div class="panel">
-        <div class="panel-title">Research Parameters</div>
+      .btn-success:hover {
+        background: #059669;
+        transform: translateY(-1px);
+      }
 
-        <label>S-Box Type</label>
-        <select id="sboxType">
-          <option>AES</option>
-          <option>K4</option>
-          <option>K44</option>
-          <option>K81</option>
-          <option>K111</option>
-          <option>K128</option>
-        </select>
+      .btn-block {
+        width: 100%;
+      }
 
-        <label>Theme</label>
-        <select onchange="setTheme(this.value)">
-          <option value="soft">Soft</option>
-          <option value="galaxy">Galaxy</option>
-        </select>
+      .control-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .status-indicator {
+        padding: 0.75rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        text-align: center;
+        font-weight: 500;
+        margin-bottom: 1rem;
+      }
+
+      .status-idle {
+        background: #e9ecef;
+        color: var(--text-secondary);
+      }
+
+      .status-running {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .status-done {
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      .tab-container {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border);
+      }
+
+      .tab {
+        padding: 0.75rem 1.5rem;
+        background: none;
+        border: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+        position: relative;
+        bottom: -2px;
+      }
+
+      .tab:hover {
+        color: var(--primary);
+      }
+
+      .tab.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      .sbox-table-container {
+        overflow-x: auto;
+        border-radius: 8px;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .sbox-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+        background: var(--bg-card);
+      }
+
+      .sbox-table thead th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.75rem;
+        text-align: center;
+        font-weight: 600;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .sbox-table thead th:first-child {
+        border-radius: 8px 0 0 0;
+      }
+
+      .sbox-table thead th:last-child {
+        border-radius: 0 8px 0 0;
+      }
+
+      .sbox-table tbody tr {
+        transition: background 0.15s;
+      }
+
+      .sbox-table tbody tr:nth-child(even) {
+        background: #f8f9fa;
+      }
+
+      .sbox-table tbody tr:hover {
+        background: #e7e9fc;
+      }
+
+      .sbox-table td {
+        padding: 0.625rem;
+        text-align: center;
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+        font-family: "Monaco", "Menlo", monospace;
+      }
+
+      .sbox-table tbody td:first-child {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+      }
+
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+
+      .metric-card {
+        background: var(--bg-main);
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1.5px solid var(--border);
+        transition: all 0.2s;
+      }
+
+      .metric-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .metric-label {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+      }
+
+      .metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      .textarea-container {
+        margin-bottom: 1rem;
+      }
+
+      .form-textarea {
+        width: 100%;
+        min-height: 100px;
+        padding: 0.75rem;
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-family: "Monaco", "Menlo", monospace;
+        resize: vertical;
+        background: var(--bg-main);
+      }
+
+      .form-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: var(--bg-card);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      }
+
+      .button-group {
+        display: flex;
+        gap: 0.75rem;
+      }
+
+      .file-input-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+        width: 100%;
+      }
+
+      .file-input-wrapper input[type="file"] {
+        position: absolute;
+        left: -9999px;
+      }
+
+      .file-input-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.625rem;
+        background: var(--bg-hover);
+        border: 1.5px dashed var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+      }
+
+      .file-input-label:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+
+      .result-display {
+        background: var(--bg-main);
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1.5px solid var(--border);
+        font-family: "Monaco", "Menlo", monospace;
+        font-size: 0.85rem;
+        word-break: break-all;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        color: var(--text-primary);
+      }
+
+      .image-preview {
+        max-width: 100%;
+        border-radius: 8px;
+        box-shadow: var(--shadow-sm);
+        margin-top: 1rem;
+      }
+
+      @media (max-width: 968px) {
+        .main-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .metrics-grid {
+          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🔐 AES & S-Box Analysis Platform</h1>
+        <p>Advanced Cryptographic Research & Experimentation Tool</p>
       </div>
 
-      <div class="panel" style="margin-top:1.5rem">
-        <div class="panel-title">Control Panel</div>
-        <div id="status" class="status">Idle</div>
+      <div class="main-grid">
+        <!-- Left Sidebar: Research Parameters & Control Panel -->
+        <div>
+          <!-- Research Parameters -->
+          <div class="panel">
+            <div class="panel-title">Research Parameters</div>
 
-        <button onclick="generateSBox()">Generate S-Box</button>
-        <button onclick="analyzeSBox()">Analyze</button>
-        <button onclick="exportExcel()">Export Excel</button>
-      </div>
-    </div>
+            <div class="form-group">
+              <label class="form-label">S-Box Type</label>
+              <select id="sboxType" class="form-select">
+                   <option value="AES">AES</option>
+                   <option value="K4">K4</option>
+                   <option value="K44">K44</option>
+                   <option value="K81">K81</option>
+                   <option value="K111">K111</option>
+                   <option value="K128">K128</option>
+              </select>
+            </div>
 
-    <!-- RIGHT PANEL -->
-    <div class="panel">
-      <div class="tab-container">
-        <button class="tab active" onclick="openTab('sbox',this)">S-Box</button>
-        <button class="tab" onclick="openTab('analysis',this)">Analysis</button>
-        <button class="tab" onclick="openTab('text',this)">Text AES</button>
-        <button class="tab" onclick="openTab('image',this)">Image AES</button>
-      </div>
+            <div class="form-group">
+              <label class="form-label">Analysis Mode</label>
+              <select id="analysisMode" class="form-select">
+                <option value="basic">Basic Metrics</option>
+                <option value="advanced">Advanced Analysis</option>
+                <option value="full">Full Cryptanalysis</option>
+              </select>
+            </div>
 
-      <!-- SBOX -->
-      <div id="tab-sbox" class="tab-content active">
-        <div class="sbox-table-container">
-          <table class="sbox-table">
-            <thead>
-              <tr>
-                <th></th>
-                <th colspan="16">S-Box Values</th>
-              </tr>
-            </thead>
-            <tbody id="sboxBody"></tbody>
-          </table>
+            <div class="form-group">
+              <label class="form-label">Affine Parameter (a)</label>
+              <input
+                type="number"
+                id="affineA"
+                class="form-input"
+                value="7"
+                min="1"
+                max="255"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Affine Parameter (b)</label>
+              <input
+                type="number"
+                id="affineB"
+                class="form-input"
+                value="3"
+                min="0"
+                max="255"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Random Seed</label>
+              <input
+                type="number"
+                id="randomSeed"
+                class="form-input"
+                placeholder="Leave empty for random"
+              />
+            </div>
+
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="enableNL" checked />
+                <label class="form-label" style="margin: 0"
+                  >Enable Non-linearity</label
+                >
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="enableSAC" checked />
+                <label class="form-label" style="margin: 0"
+                  >Enable SAC Analysis</label
+                >
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="enableBIC" checked />
+                <label class="form-label" style="margin: 0"
+                  >Enable BIC Analysis</label
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Control Panel -->
+          <div class="panel" style="margin-top: 1.5rem">
+            <div class="panel-title">Control Panel</div>
+
+            <div class="status-indicator status-idle" id="statusIndicator">
+              Status: Idle
+            </div>
+
+            <div class="control-panel">
+              <button
+                class="btn btn-primary btn-block"
+                onclick="generateSBox()"
+              >
+                ⚡ Generate S-Box
+              </button>
+              <button class="btn btn-primary btn-block" onclick="analyzeSBox()">
+                🔍 Analyze S-Box
+              </button>
+              <button
+                class="btn btn-success btn-block"
+                onclick="exportAnalysis()"
+              >
+                📊 Export to Excel
+              </button>
+              <button
+                class="btn btn-secondary btn-block"
+                onclick="resetParameters()"
+              >
+                🔄 Reset Parameters
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div>
+          <div class="panel">
+            <div class="tab-container">
+              <button class="tab active" onclick="switchTab('sbox')">
+                S-Box Matrix
+              </button>
+              <button class="tab" onclick="switchTab('analysis')">
+                Analysis Results
+              </button>
+              <button class="tab" onclick="switchTab('text')">
+                Text Encryption
+              </button>
+              <button class="tab" onclick="switchTab('image')">
+                Image Encryption
+              </button>
+            </div>
+
+            <!-- S-Box Matrix Tab -->
+            <div id="tab-sbox" class="tab-content active">
+              <div class="sbox-table-container">
+                <table class="sbox-table" id="sboxTable">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>0</th>
+                      <th>1</th>
+                      <th>2</th>
+                      <th>3</th>
+                      <th>4</th>
+                      <th>5</th>
+                      <th>6</th>
+                      <th>7</th>
+                      <th>8</th>
+                      <th>9</th>
+                      <th>A</th>
+                      <th>B</th>
+                      <th>C</th>
+                      <th>D</th>
+                      <th>E</th>
+                      <th>F</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sboxTableBody">
+                    <!-- Will be populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Analysis Results Tab -->
+            <div id="tab-analysis" class="tab-content">
+              <div class="metrics-grid" id="metricsGrid">
+                <!-- Will be populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Text Encryption Tab -->
+            <div id="tab-text" class="tab-content">
+              <div class="form-group">
+                <label class="form-label">Encryption Key</label>
+                <input
+                  type="text"
+                  id="textKey"
+                  class="form-input"
+                  placeholder="Enter encryption key"
+                />
+              </div>
+
+              <div class="textarea-container">
+                <label class="form-label">Input Text</label>
+                <textarea
+                  id="textInput"
+                  class="form-textarea"
+                  placeholder="Enter text to encrypt/decrypt"
+                ></textarea>
+              </div>
+
+              <div class="button-group">
+                <button
+                  class="btn btn-primary"
+                  style="flex: 1"
+                  onclick="encryptText()"
+                >
+                  🔒 Encrypt
+                </button>
+                <button
+                  class="btn btn-secondary"
+                  style="flex: 1"
+                  onclick="decryptText()"
+                >
+                  🔓 Decrypt
+                </button>
+              </div>
+
+              <div style="margin-top: 1.5rem">
+                <label class="form-label">Result</label>
+                <div class="result-display" id="textResult">
+                  Result will appear here...
+                </div>
+              </div>
+            </div>
+
+            <!-- Image Encryption Tab -->
+            <div id="tab-image" class="tab-content">
+              <div class="form-group">
+                <label class="form-label">Encryption Key</label>
+                <input
+                  type="text"
+                  id="imageKey"
+                  class="form-input"
+                  placeholder="Enter encryption key"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Select Image</label>
+                <div class="file-input-wrapper">
+                  <input type="file" id="imageInput" accept="image/*" />
+                  <label for="imageInput" class="file-input-label">
+                    📁 Choose Image File
+                  </label>
+                </div>
+              </div>
+
+              <div class="button-group">
+                <button
+                  class="btn btn-primary"
+                  style="flex: 1"
+                  onclick="encryptImage()"
+                >
+                  🔒 Encrypt Image
+                </button>
+                <button
+                  class="btn btn-secondary"
+                  style="flex: 1"
+                  onclick="decryptImage()"
+                >
+                  🔓 Decrypt Image
+                </button>
+              </div>
+
+              <div id="imagePreview"></div>
+            </div>
+          </div>
         </div>
       </div>
-
-      <!-- ANALYSIS -->
-      <div id="tab-analysis" class="tab-content">
-        <div class="metrics-grid" id="metricsGrid"></div>
-      </div>
-
-      <!-- TEXT -->
-      <div id="tab-text" class="tab-content">
-        <input id="textKey" placeholder="Key">
-        <textarea id="textInput" placeholder="Text"></textarea>
-        <button onclick="encryptText()">Encrypt</button>
-        <button onclick="decryptText()">Decrypt</button>
-        <pre id="textResult"></pre>
-      </div>
-
-      <!-- IMAGE -->
-      <div id="tab-image" class="tab-content">
-        <input type="file" id="imageInput">
-        <input id="imageKey" placeholder="Key">
-        <button onclick="encryptImage()">Encrypt</button>
-        <button onclick="decryptImage()">Decrypt</button>
-        <div id="imagePreview"></div>
-      </div>
-
     </div>
-  </div>
-</div>
 
-<script>
-function setTheme(t){
-  document.body.className=t;
-}
+    <script>
+      // Tab switching
+      function switchTab(tabName) {
+        document
+          .querySelectorAll(".tab")
+          .forEach((tab) => tab.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((content) => content.classList.remove("active"));
 
-function openTab(name,el){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('tab-'+name).classList.add('active');
-}
+        event.target.classList.add("active");
+        document.getElementById("tab-" + tabName).classList.add("active");
+      }
 
-async function generateSBox(){
-  const t=document.getElementById('sboxType').value;
-  const res=await fetch('/sbox/'+t);
-  const data=await res.json();
-  const body=document.getElementById('sboxBody');
-  body.innerHTML='';
-  data.forEach((row,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML='<th>'+i.toString(16).toUpperCase()+'</th>'+row.map(v=>'<td>'+v.toString(16).padStart(2,'0')+'</td>').join('');
-    body.appendChild(tr);
-  });
-}
+      // Status indicator
+      function setStatus(status) {
+        const indicator = document.getElementById("statusIndicator");
+        indicator.className = "status-indicator";
 
-async function analyzeSBox(){
-  const t=document.getElementById('sboxType').value;
-  const res=await fetch('/analysis/'+t);
-  const d=await res.json();
-  const g=document.getElementById('metricsGrid');
-  g.innerHTML='';
-  Object.entries(d).forEach(([k,v])=>{
-    g.innerHTML+=`<div class="metric-card"><div class="metric-label">${k}</div><div class="metric-value">${Array.isArray(v)?v.join(','):v}</div></div>`;
-  });
-}
+        if (status === "running") {
+          indicator.classList.add("status-running");
+          indicator.textContent = "Status: Processing...";
+        } else if (status === "done") {
+          indicator.classList.add("status-done");
+          indicator.textContent = "Status: Complete ✓";
+          setTimeout(() => setStatus("idle"), 2000);
+        } else {
+          indicator.classList.add("status-idle");
+          indicator.textContent = "Status: Idle";
+        }
+      }
 
-function exportExcel(){
-  const t=document.getElementById('sboxType').value;
-  window.location='/export/'+t;
-}
+      // Generate S-Box
+      async function generateSBox() {
+        setStatus("running");
+        const sboxType = document.getElementById("sboxType").value;
 
-async function encryptText(){
-  const r=await fetch('/text/encrypt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:textInput.value,key:textKey.value})});
-  textResult.textContent=(await r.json()).result;
-}
+        try {
+          const response = await fetch(`/sbox/${sboxType}`);
+          const data = await response.json();
+          renderSBoxTable(data);
+          setStatus("done");
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Failed to generate S-Box");
+          setStatus("idle");
+        }
+      }
 
-async function decryptText(){
-  const r=await fetch('/text/decrypt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:textInput.value,key:textKey.value})});
-  textResult.textContent=(await r.json()).result;
-}
+      // Render S-Box Table
+      function renderSBoxTable(data) {
+        const tbody = document.getElementById("sboxTableBody");
+        tbody.innerHTML = "";
 
-async function encryptImage(){
-  const f=new FormData();
-  f.append('image',imageInput.files[0]);
-  f.append('key',imageKey.value);
-  const r=await fetch('/image/encrypt',{method:'POST',body:f});
-  imagePreview.innerHTML=`<img src="${URL.createObjectURL(await r.blob())}" width="100%">`;
-}
+        data.forEach((row, i) => {
+          const tr = document.createElement("tr");
+          const rowHeader = document.createElement("td");
+          rowHeader.textContent = i.toString(16).toUpperCase();
+          tr.appendChild(rowHeader);
 
-async function decryptImage(){
-  const f=new FormData();
-  f.append('image',imageInput.files[0]);
-  f.append('key',imageKey.value);
-  const r=await fetch('/image/decrypt',{method:'POST',body:f});
-  imagePreview.innerHTML=`<img src="${URL.createObjectURL(await r.blob())}" width="100%">`;
-}
+          row.forEach((val) => {
+            const td = document.createElement("td");
+            td.textContent = val.toString(16).toUpperCase().padStart(2, "0");
+            tr.appendChild(td);
+          });
 
-window.onload=generateSBox;
-</script>
+          tbody.appendChild(tr);
+        });
+      }
 
-</body>
+      // Analyze S-Box
+      async function analyzeSBox() {
+        setStatus("running");
+        const sboxType = document.getElementById("sboxType").value;
+
+        try {
+          const response = await fetch(`/analysis/${sboxType}`);
+          const data = await response.json();
+          renderAnalysisMetrics(data);
+          setStatus("done");
+          switchTab("analysis");
+          document.querySelectorAll(".tab")[1].classList.add("active");
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Failed to analyze S-Box");
+          setStatus("idle");
+        }
+      }
+
+      // Render Analysis Metrics
+      function renderAnalysisMetrics(metrics) {
+        const grid = document.getElementById("metricsGrid");
+        grid.innerHTML = "";
+
+        for (const [key, value] of Object.entries(metrics)) {
+          const card = document.createElement("div");
+          card.className = "metric-card";
+          card.innerHTML = `
+                    <div class="metric-label">${key}</div>
+                    <div class="metric-value">${
+                      Array.isArray(value) ? value.join(", ") : value
+                    }</div>
+                `;
+          grid.appendChild(card);
+        }
+      }
+
+      // Export Analysis
+      async function exportAnalysis() {
+        setStatus("running");
+        const sboxType = document.getElementById("sboxType").value;
+
+        try {
+          window.location.href = `/export/${sboxType}`;
+          setStatus("done");
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Failed to export analysis");
+          setStatus("idle");
+        }
+      }
+
+      // Reset Parameters
+      function resetParameters() {
+        document.getElementById("sboxType").value = "AES";
+        document.getElementById("analysisMode").value = "basic";
+        document.getElementById("affineA").value = "7";
+        document.getElementById("affineB").value = "3";
+        document.getElementById("randomSeed").value = "";
+        document.getElementById("enableNL").checked = true;
+        document.getElementById("enableSAC").checked = true;
+        document.getElementById("enableBIC").checked = true;
+        alert("Parameters reset to default");
+      }
+
+      // Text Encryption
+      async function encryptText() {
+        const text = document.getElementById("textInput").value;
+        const key = document.getElementById("textKey").value;
+
+        if (!text || !key) {
+          alert("Please enter both text and key");
+          return;
+        }
+
+        try {
+          const response = await fetch("/text/encrypt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text, key }),
+          });
+          const data = await response.json();
+          document.getElementById("textResult").textContent = data.result;
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Encryption failed");
+        }
+      }
+
+      // Text Decryption
+      async function decryptText() {
+        const text = document.getElementById("textInput").value;
+        const key = document.getElementById("textKey").value;
+
+        if (!text || !key) {
+          alert("Please enter both text and key");
+          return;
+        }
+
+        try {
+          const response = await fetch("/text/decrypt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text, key }),
+          });
+          const data = await response.json();
+          document.getElementById("textResult").textContent = data.result;
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Decryption failed");
+        }
+      }
+
+      // Image Encryption
+      async function encryptImage() {
+        const file = document.getElementById("imageInput").files[0];
+        const key = document.getElementById("imageKey").value;
+
+        if (!file || !key) {
+          alert("Please select an image and enter a key");
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("image", file);
+        formData.append("key", key);
+
+        try {
+          const response = await fetch("/image/encrypt", {
+            method: "POST",
+            body: formData,
+          });
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+
+          document.getElementById("imagePreview").innerHTML = `
+                    <img src="${url}" class="image-preview" alt="Encrypted Image">
+                `;
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Image encryption failed");
+        }
+      }
+
+      // Image Decryption
+      async function decryptImage() {
+        const file = document.getElementById("imageInput").files[0];
+        const key = document.getElementById("imageKey").value;
+
+        if (!file || !key) {
+          alert("Please select an image and enter a key");
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("image", file);
+        formData.append("key", key);
+
+        try {
+          const response = await fetch("/image/decrypt", {
+            method: "POST",
+            body: formData,
+          });
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+
+          document.getElementById("imagePreview").innerHTML = `
+                    <img src="${url}" class="image-preview" alt="Decrypted Image">
+                `;
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Image decryption failed");
+        }
+      }
+
+      // Load default S-Box on page load
+      window.onload = function () {
+        generateSBox();
+      };
+
+      // Auto-update S-Box when type changes
+      document
+        .getElementById("sboxType")
+        .addEventListener("change", generateSBox);
+    </script>
+  </body>
 </html>
